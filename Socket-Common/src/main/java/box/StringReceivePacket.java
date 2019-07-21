@@ -2,23 +2,29 @@ package box;
 
 import core.ReceivePacket;
 
-public class StringReceivePacket extends ReceivePacket{
-	
-	private byte[] buffer;
-	private int position;
-	
-	public StringReceivePacket(int len) {
-		this.buffer=new byte[len];
-		this.length=len;
-	}
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
 
-	@Override
-	public void save(byte[] bytes, int count) {
-		System.arraycopy(bytes, 0, buffer, position, count);
+public class StringReceivePacket extends ReceivePacket<ByteArrayOutputStream>{
+	
+	private  String string;
+
+	public StringReceivePacket(int len) {
+		this.length=len;
 	}
 	
 	public String string() {
-		return new String(buffer);
+		return string;
 	}
-	
+
+	@Override
+	protected ByteArrayOutputStream createStream() {
+		return new ByteArrayOutputStream((int)length);
+	}
+
+	@Override
+	protected void closeStream(ByteArrayOutputStream stream) throws IOException {
+		super.closeStream(stream);
+		string=new String(stream.toByteArray());
+	}
 }

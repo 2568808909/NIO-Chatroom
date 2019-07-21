@@ -2,8 +2,11 @@ package core;
 
 import java.io.EOFException;
 import java.io.IOException;
+import java.io.InputStream;
 import java.nio.ByteBuffer;
+import java.nio.channels.ReadableByteChannel;
 import java.nio.channels.SocketChannel;
+import java.nio.channels.WritableByteChannel;
 
 /**
  * IO参数类，对ByteBuffer进行封装，防止ByteBuffer无节制申请内存，
@@ -14,33 +17,42 @@ import java.nio.channels.SocketChannel;
 public class IoArgs {
 	
 	private int limit=5;
-	private byte[] data=new byte[256];
-	private ByteBuffer buffer=ByteBuffer.wrap(data);
+	private ByteBuffer buffer=ByteBuffer.allocate(limit);
 	
 	/**
-	 * 从bytes中读取数据
-	 * @param bytes
-	 * @param offset
+	 * 读取数据
+	 * @param channel
 	 * @return
 	 */
-	public int readForm(byte[] bytes,int offset) {
-		int size=Math.min(bytes.length-offset, buffer.remaining());
-		buffer.put(bytes,offset,size);
-		return size;
+	public int readForm(ReadableByteChannel channel) throws IOException{
+		startWriting();
+		int bytesProduced=0;
+		while(buffer.hasRemaining()) {
+			int len=channel.read(buffer);
+			if(len<0) {
+				throw new EOFException();
+			}
+			bytesProduced+=len;
+		}
+		finishWriting();
+		return bytesProduced;
 	}
 	
 	/**
-	 * 写入数据到bytes中
-	 * @param bytes
-	 * @param offset
+	 * 写入数据
+	 * @param channel
 	 * @return
 	 */
-	public int writeTo(byte[] bytes,int offset) {
-		int len=bytes.length-offset;
-		int len2=buffer.remaining();
-		int size=Math.min(bytes.length-offset, buffer.remaining());
-		buffer.get(bytes,offset,size);
-		return size;
+	public int writeTo(WritableByteChannel channel) throws IOException{
+		int bytesProduced=0;
+		while(buffer.hasRemaining()) {
+			int len=channel.write(buffer);
+			if(len<0) {
+				throw new EOFException();
+			}
+			bytesProduced+=len;
+		}
+		return bytesProduced;
 	}
 	
 	/**

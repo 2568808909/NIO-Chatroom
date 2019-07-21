@@ -79,7 +79,7 @@ public class AsyncSendDispatcher implements SendDispatcher{
 			//首包，需要携带长度信息
 			args.writeLength(total);
 		}
-		byte[] bytes=packetTemp.bytes();
+		byte[] bytes=packetTemp.open();
 		//把bytes写入到IoArgs中
 		int count=args.readForm(bytes, position);
 		position+=count;
