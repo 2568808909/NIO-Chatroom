@@ -2,7 +2,9 @@ package box;
 
 import core.SendPacket;
 
-public class StringSendPacket extends SendPacket{
+import java.io.ByteArrayInputStream;
+
+public class StringSendPacket extends SendPacket<ByteArrayInputStream>{
 
 	private final byte[] bytes;
 	
@@ -10,12 +12,9 @@ public class StringSendPacket extends SendPacket{
 		this.bytes=msg.getBytes();
 		this.length=bytes.length;
 	}
-	
-	@Override
-	public byte[] bytes() {
-		return bytes;
-	}
-	
-	
 
+	@Override
+	protected ByteArrayInputStream createStream() {
+		return new ByteArrayInputStream(bytes);
+	}
 }
