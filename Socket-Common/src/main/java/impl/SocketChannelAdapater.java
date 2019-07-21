@@ -6,7 +6,6 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 import core.CloseUtils;
 import core.IoArgs;
-import core.IoArgs.IoArgsEventListener;
 import core.IoProvider;
 import core.Receiver;
 import core.Sender;
@@ -18,25 +17,10 @@ public class SocketChannelAdapater implements Receiver,Sender,Cloneable{
 	private final IoProvider ioProvider;
 	private final OnChannelStatusChangedListener listener;
 	
-	private IoArgs.IoArgsEventListener inputEventListener;
-	private IoArgs.IoArgsEventListener outputEventListener;
+	private IoArgs.IoArgsEventProcessor receiveIoEventProcessor;
+	private IoArgs.IoArgsEventProcessor sendIoEventProcessor;
 	
 	private IoArgs receiveArgsTemp;
-	
-	@Override
-	public void setReceiveListener(IoArgsEventListener listener) {
-		inputEventListener=listener;
-	}
-
-	@Override
-	public boolean receiveAsync(IoArgs args) throws IOException {
-		if(isClose.get()) {
-			System.out.println("Current channel is close");
-			throw new IOException();
-		}
-		receiveArgsTemp=args;
-		return ioProvider.registerInput(socketChannel, inputCallback);
-	}
 	
 	private IoProvider.HandleInputCallback inputCallback=new IoProvider.HandleInputCallback() {
 		@Override
@@ -44,17 +28,15 @@ public class SocketChannelAdapater implements Receiver,Sender,Cloneable{
 			if(isClose.get()) {
 				return;
 			}
-			IoArgs args=receiveArgsTemp;
-			IoArgs.IoArgsEventListener receiveIoEventListener=SocketChannelAdapater.this.inputEventListener;
-			//回调开始操作
-			receiveIoEventListener.onStart(args);
+			IoArgs.IoArgsEventProcessor processor=SocketChannelAdapater.this.receiveIoEventProcessor;
+			IoArgs args=processor.provideIoArgs();
 			//具体的读取操作
 			try {
 				if(args.readForm(socketChannel)>0) {
 					//完成读取，进行回调
-					receiveIoEventListener.onCompleted(args);
+					processor.onConsumeCompleted(args);
 				}else {
-					throw new IOException("Cannot read any data!");
+					processor.onConsumeFailed(args,new IOException("Cannot read any data!"));
 				}
 			}catch (Exception e) {
 				e.printStackTrace();
@@ -70,17 +52,14 @@ public class SocketChannelAdapater implements Receiver,Sender,Cloneable{
 			if(isClose.get()) {
 				return;
 			}
-			IoArgs args=getAttach();
-			IoArgs.IoArgsEventListener listener=outputEventListener;
-			
-			listener.onStart(args);
-			
+			IoArgs.IoArgsEventProcessor processor=SocketChannelAdapater.this.sendIoEventProcessor;
+			IoArgs args=processor.provideIoArgs();
 			try {
 				if(args.writeTo(socketChannel)>0) {
 					//完成读取，进行回调
-					listener.onCompleted(args);
+					processor.onConsumeCompleted(args);
 				}else {
-					throw new IOException("Cannot write any data!");
+					processor.onConsumeFailed(args,new IOException("Cannot write any data!"));
 				}
 			}catch (Exception e) {
 				e.printStackTrace();
@@ -112,17 +91,33 @@ public class SocketChannelAdapater implements Receiver,Sender,Cloneable{
 	}
 
 	@Override
-	public boolean sendAsync(IoArgs args, IoArgsEventListener listener) throws IOException {
+	public void setReceiveListener(IoArgs.IoArgsEventProcessor processor) {
+		this.receiveIoEventProcessor=processor;
+	}
+
+	@Override
+	public boolean postReceiveAsync() throws IOException {
 		if(isClose.get()) {
 			System.out.println("Current channel is close");
 			throw new IOException();
-		}	
-		outputEventListener=listener;
-		//将当前发送数据附加到回调当中
-		outputCallback.setAttach(args);
-		
+		}
+		return ioProvider.registerInput(socketChannel, inputCallback);
+	}
+
+	@Override
+	public void setSendListener(IoArgs.IoArgsEventProcessor processor) {
+		this.sendIoEventProcessor=processor;
+	}
+
+	@Override
+	public boolean postSendAsync() throws IOException {
+		if(isClose.get()) {
+			System.out.println("Current channel is close");
+			throw new IOException();
+		}
 		return ioProvider.registerOutput(socketChannel, outputCallback);
 	}
+
 
 	public interface OnChannelStatusChangedListener{
 		void onChannelClose(SocketChannel socketChannel);

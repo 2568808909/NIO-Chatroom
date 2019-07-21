@@ -90,7 +90,6 @@ public class IoArgs {
 			}
 			bytesProduced+=len;
 		}
-		System.out.println("byte len :"+bytesProduced);
 		return bytesProduced;
 	}
 	
@@ -118,15 +117,32 @@ public class IoArgs {
 	public void setLimit(int limit) {
 		this.limit=limit;
 	}
-	
-	public interface IoArgsEventListener{
-		void onStart(IoArgs args);
-		
-		void onCompleted(IoArgs args);
+
+	public interface  IoArgsEventProcessor{
+		/**
+		 * 提供一份可消费的IoArgs
+		 * @return
+		 */
+		IoArgs provideIoArgs();
+
+		/**
+		 * 消费失败时回调
+		 * @param args
+		 * @param e
+		 */
+		void onConsumeFailed(IoArgs args,Exception e);
+
+		/**
+		 * 消费成功时回调
+		 * @param args
+		 */
+		void onConsumeCompleted(IoArgs args);
 	}
 
 	public void writeLength(int total) {
+		startWriting();
 		buffer.putInt(total);
+		finishWriting();
 	}
 	
 	public int readLength() {
