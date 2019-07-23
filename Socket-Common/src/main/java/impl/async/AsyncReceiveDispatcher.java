@@ -1,6 +1,8 @@
 package impl.async;
 
 import java.io.IOException;
+import java.nio.channels.Channels;
+import java.nio.channels.WritableByteChannel;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import box.StringReceivePacket;
@@ -10,38 +12,15 @@ import core.ReceiveDispatcher;
 import core.ReceivePacket;
 import core.Receiver;
 
-public class AsyncReceiveDispatcher implements ReceiveDispatcher{
+public class AsyncReceiveDispatcher implements ReceiveDispatcher, IoArgs.IoArgsEventProcessor {
 	private AtomicBoolean isClose=new AtomicBoolean(false);
 	private final Receiver receiver;
 	private final ReceivePacketCallback callback;
-	
+	private WritableByteChannel packetChannel;
 	private IoArgs ioArgs=new IoArgs();
-	private ReceivePacket packetTemp;
-	private byte[] buffer;
-	private int total;
-	private int position;
-	
-	private IoArgs.IoArgsEventListener listener=new IoArgs.IoArgsEventListener() {
-		
-		@Override
-		public void onStart(IoArgs args) {
-			int receiveSize;
-			if(packetTemp==null) {
-				receiveSize=4;//也就是长度
-			}else {
-				receiveSize=Math.min(total-position, args.capacity());
-			}
-			//设置本次接受数据的大小
-			args.setLimit(receiveSize);
-		}
-		
-		@Override
-		public void onCompleted(IoArgs args) {
-			assemblePacket(args);
-			//继续接受下一条数据
-			registerReceive();
-		}
-	};
+	private ReceivePacket<?> packetTemp;
+	private long total;
+	private long position;
 	
 	/**
 	 * 解析数据到Packet
@@ -51,33 +30,38 @@ public class AsyncReceiveDispatcher implements ReceiveDispatcher{
 		if(packetTemp==null) {
 			int length=args.readLength();
 			packetTemp=new StringReceivePacket(length);
-			buffer=new byte[length];
+			packetChannel= Channels.newChannel(packetTemp.open());
 			total=length;
 			position=0;
 		}
-		int count=args.writeTo(buffer, 0);
-		if(count>0) {
-			packetTemp.save(buffer, count);
-			position+=count;
-			if(position==total) {
-				completedPacket();
-				packetTemp=null;
+		try {
+			int count = args.writeTo(packetChannel);
+			position += count;
+			if (position == total) {
+				completedPacket(true);
 			}
+		}catch (IOException e){
+			e.printStackTrace();
+			completedPacket(false);
 		}
 	}
 	
 	/**
 	 * 完成数据的接受操作
 	 */
-	private void completedPacket() {
+	private void completedPacket(boolean isSuccess) {
 		ReceivePacket packet=this.packetTemp;
-		CloseUtils.close(packet);
-		callback.onReceivePacketCompleted(packet);
+		CloseUtils.close(packet,packetChannel);
+		packetTemp=null;
+		packetChannel=null;
+		if(packet!=null) {
+			callback.onReceivePacketCompleted(packet);
+		}
 	}
 
 	public AsyncReceiveDispatcher(Receiver receiver,ReceivePacketCallback callback) {
 		this.receiver=receiver;
-		this.receiver.setReceiveListener(listener);
+		this.receiver.setReceiveListener(this);
 		this.callback=callback;
 	}
 
@@ -88,7 +72,7 @@ public class AsyncReceiveDispatcher implements ReceiveDispatcher{
 
 	private void registerReceive() {
 		try {
-			receiver.receiveAsync(ioArgs);
+			receiver.postReceiveAsync();
 		}catch (Exception e) {
 			closeAndNotify();
 		}
@@ -114,5 +98,28 @@ public class AsyncReceiveDispatcher implements ReceiveDispatcher{
 			}
 		}
 	}
-	
+
+	@Override
+	public IoArgs provideIoArgs() {
+		IoArgs args=ioArgs;
+		int receiveSize;
+		if(packetTemp==null){
+			receiveSize=4;
+		}else{
+			receiveSize=(int)Math.min(total-position,args.capacity());
+		}
+		args.setLimit(receiveSize);
+		return args;
+	}
+
+	@Override
+	public void onConsumeFailed(IoArgs args, Exception e) {
+		e.printStackTrace();
+	}
+
+	@Override
+	public void onConsumeCompleted(IoArgs args) {
+		assemblePacket(args);
+		registerReceive();
+	}
 }
