@@ -1,10 +1,13 @@
 package core;
 
 import java.io.Closeable;
+import java.io.File;
 import java.io.IOException;
 import java.nio.channels.SocketChannel;
 import java.util.UUID;
 
+import box.BytesReceivePacket;
+import box.FileReceivePacket;
 import box.StringReceivePacket;
 import box.StringSendPacket;
 import impl.SocketChannelAdapater;
@@ -14,17 +17,17 @@ import impl.async.AsyncSendDispatcher;
 /**
  * 处理连接,基于SocketChannel进行连接，但是收发数据另外封装了Receiver和Sender，
  * 而不是通过SocketChannel，以模拟一个真实的连接
- * @author Administrator
  *
+ * @author Administrator
  */
-public class Connector implements Closeable,SocketChannelAdapater.OnChannelStatusChangedListener{
+public abstract class Connector implements Closeable, SocketChannelAdapater.OnChannelStatusChangedListener {
 
-	private UUID key=UUID.randomUUID();
-	private SocketChannel channel;
-	private Receiver receiver;
-	private Sender sender;
-	private SendDispatcher sendDispatcher;
-	private ReceiveDispatcher receiveDispatcher;
+    private UUID key = UUID.randomUUID();
+    private SocketChannel channel;
+    private Receiver receiver;
+    private Sender sender;
+    private SendDispatcher sendDispatcher;
+    private ReceiveDispatcher receiveDispatcher;
 //	private IoArgs.IoArgsEventListener echoReceiverListener=new IoArgs.IoArgsEventListener() {
 //		@Override
 //		public void onStart(IoArgs args) {
@@ -38,37 +41,56 @@ public class Connector implements Closeable,SocketChannelAdapater.OnChannelStatu
 //			readNextMessage();
 //		}
 //	};
-	
-	private ReceiveDispatcher.ReceivePacketCallback receivePacketCallback=new ReceiveDispatcher.ReceivePacketCallback() {
-		
-		@Override
-		public void onReceivePacketCompleted(ReceivePacket packet) {
-			if(packet instanceof StringReceivePacket) {
-				String msg=((StringReceivePacket) packet).string();
-				onReceiveNewMessage(msg);
-			}
-		}
-	};
-	
-	protected void onReceiveNewMessage(String str) {
-		System.out.println(key.toString()+":"+str);
-	}
-	
-	public void setup(SocketChannel socketChannel)throws IOException {
-		this.channel=socketChannel;
-		IoContext context=IoContext.get();
-		SocketChannelAdapater adapater=new SocketChannelAdapater(socketChannel, context.getIoProvider(), this);
-		
-		receiver=adapater;
-		sender=adapater;
-		
-		sendDispatcher =new AsyncSendDispatcher(sender);
-		receiveDispatcher=new AsyncReceiveDispatcher(receiver, receivePacketCallback);
-		
-		//启动接收
-		receiveDispatcher.start();
+
+    private ReceiveDispatcher.ReceivePacketCallback receivePacketCallback = new ReceiveDispatcher.ReceivePacketCallback() {
+
+        @Override
+        public void onReceivePacketCompleted(ReceivePacket packet) {
+            onReceiveNewPacket(packet);
+        }
+
+        @Override
+        public ReceivePacket<?, ?> onArrivedNewPacket(byte type,int length) {
+            switch (type){
+                case Packet.TYPE_MEMORY_BYTES:
+                    return new BytesReceivePacket(length);
+                case Packet.TYPE_MEMORY_STRING:
+                    return new StringReceivePacket(length);
+                case Packet.TYPE_STREAM_FILE:
+                    return new FileReceivePacket(length,onCreateNewReceiveFile());
+                case Packet.TYPE_STREAM_DIRECT:
+                    return new BytesReceivePacket(length);
+                default:
+                    throw new UnsupportedOperationException("UnSupport type :"+type);
+            }
+        }
+    };
+
+    protected abstract File onCreateNewReceiveFile();
+
+    protected void onReceiveNewPacket(ReceivePacket packet) {
+        System.out.println(key.toString() + ": receive New packet " + packet.type() + " " + packet.length());
+    }
+
+    protected void onReceiveNewMessage(String str) {
+        System.out.println(key.toString() + ":" + str);
+    }
+
+    public void setup(SocketChannel socketChannel) throws IOException {
+        this.channel = socketChannel;
+        IoContext context = IoContext.get();
+        SocketChannelAdapater adapater = new SocketChannelAdapater(socketChannel, context.getIoProvider(), this);
+
+        receiver = adapater;
+        sender = adapater;
+
+        sendDispatcher = new AsyncSendDispatcher(sender);
+        receiveDispatcher = new AsyncReceiveDispatcher(receiver, receivePacketCallback);
+
+        //启动接收
+        receiveDispatcher.start();
 //		readNextMessage();
-	}
+    }
 
 //	private void readNextMessage() {
 //		if(receiver!=null) {
@@ -80,24 +102,24 @@ public class Connector implements Closeable,SocketChannelAdapater.OnChannelStatu
 //			}
 //		}
 //	}
-	
-	public void send(String msg) {
-		SendPacket sendPacket=new StringSendPacket(msg);
-		sendDispatcher.send(sendPacket);
-	}
-	
-	@Override
-	public void close() throws IOException {
-		receiveDispatcher.close();
-		sendDispatcher.close();
-		sender.close();
-		receiver.close();
-		channel.close();
-	}
 
-	@Override
-	public void onChannelClose(SocketChannel socketChannel) {
-		
-	}
-	
+    public void send(String msg) {
+        SendPacket sendPacket = new StringSendPacket(msg);
+        sendDispatcher.send(sendPacket);
+    }
+
+    @Override
+    public void close() throws IOException {
+        receiveDispatcher.close();
+        sendDispatcher.close();
+        sender.close();
+        receiver.close();
+        channel.close();
+    }
+
+    @Override
+    public void onChannelClose(SocketChannel socketChannel) {
+
+    }
+
 }

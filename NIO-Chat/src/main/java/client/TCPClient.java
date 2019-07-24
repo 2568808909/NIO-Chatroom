@@ -1,19 +1,24 @@
 package client;
 
+import java.io.File;
 import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.nio.channels.SocketChannel;
 
 import core.CloseUtils;
 import core.Connector;
+import foo.Foo;
 
 public class TCPClient extends Connector{
+
+	private final File cachePath;
 	
-	public TCPClient(SocketChannel channel)throws IOException {
+	public TCPClient(SocketChannel channel,File cachePath)throws IOException {
 		setup(channel);
+		this.cachePath=cachePath;
 	}
 
-	public static TCPClient startWith(ServerInfo info)throws IOException {
+	public static TCPClient startWith(ServerInfo info,File cachePath)throws IOException {
 		SocketChannel socketChannel=SocketChannel.open();
 		socketChannel.connect(new InetSocketAddress(info.getAddress(), info.getPort()));
 		
@@ -21,7 +26,7 @@ public class TCPClient extends Connector{
 		System.out.println("客户端信息 ："+socketChannel.getLocalAddress().toString());
 		System.out.println("服务端信息 :"+socketChannel.getRemoteAddress().toString());
 		try {
-			return new TCPClient(socketChannel);
+			return new TCPClient(socketChannel,cachePath);
 		}catch (Exception e) {
 			e.printStackTrace();
 			CloseUtils.close(socketChannel); 
@@ -31,7 +36,12 @@ public class TCPClient extends Connector{
 	public void exit() {
 		CloseUtils.close(this);
 	}
-	
+
+	@Override
+	protected File onCreateNewReceiveFile() {
+		return Foo.createNewFile(cachePath);
+	}
+
 	@Override
 	public void onChannelClose(SocketChannel socketChannel) {
 		super.onChannelClose(socketChannel);

@@ -3,42 +3,56 @@ package core;
 import java.io.Closeable;
 import java.io.IOException;
 
-public abstract class Packet<T extends Closeable> implements Closeable{
-	protected byte type;
-	protected long length;
+public abstract class Packet<Stream extends Closeable> implements Closeable {
+    protected long length;
 
-	private T stream;
+    private Stream stream;
 
-	protected abstract T createStream();
-	protected  void closeStream(T stream) throws IOException{
-		stream.close();
-	}
-	
-	public Packet() {
-		
-	}
-	
-	public byte type() {
-		return type;
-	}
-	
-	public long length() {
-		return length;
-	}
+    //byte 类型
+    public static final byte TYPE_MEMORY_BYTES = 1;
+    //String 类型
+    public static final byte TYPE_MEMORY_STRING = 2;
+    //文件类型
+    public static final byte TYPE_STREAM_FILE = 3;
+    //长连接流 类型
+    public static final byte TYPE_STREAM_DIRECT = 4;
 
-	@Override
-	public void close() throws IOException {
-		if(stream!=null){
-			closeStream(stream);
-			stream=null;
-		}
-	}
 
-	public T open(){
-		if(stream==null){
-			stream=createStream();
-		}
-		return stream;
-	}
+    protected abstract Stream createStream();
+
+    protected void closeStream(Stream stream) throws IOException {
+        stream.close();
+    }
+
+    public Packet() {
+
+    }
+
+    /**
+     * TYPE_MEMORY_BYTES=1 byte
+     * TYPE_MEMORY_STRING String
+     * TYPE_STREAM_FILE=3 文件
+     * TYPE_STREAM_DIRECT 长连接流
+     */
+    protected abstract byte type();
+
+    public long length() {
+        return length;
+    }
+
+    @Override
+    public void close() throws IOException {
+        if (stream != null) {
+            closeStream(stream);
+            stream = null;
+        }
+    }
+
+    public Stream open() {
+        if (stream == null) {
+            stream = createStream();
+        }
+        return stream;
+    }
 
 }

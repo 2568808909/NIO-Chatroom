@@ -19,5 +19,7 @@ public interface ReceiveDispatcher extends Closeable{
 		 * @param packet
 		 */
 		void onReceivePacketCompleted(ReceivePacket packet);
-	}
+
+        ReceivePacket<?,?> onArrivedNewPacket(byte type,int length);
+    }
 }
