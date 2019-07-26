@@ -5,14 +5,18 @@ import java.io.InputStream;
 
 /**
  * 发送包的定义
- * @author Administrator
  *
+ * @author Administrator
  */
-public abstract class SendPacket<T extends InputStream> extends Packet<T>{
-	
-	private boolean isCancel;
+public abstract class SendPacket<T extends InputStream> extends Packet<T> {
 
-	public boolean isCancel() {
-		return isCancel;
-	}
+    private boolean isCanceled;
+
+    public boolean isCancel() {
+        return isCanceled;
+    }
+
+    public void cancle() {
+        isCanceled = true;
+    }
 }
