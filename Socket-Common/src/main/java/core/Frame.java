@@ -65,7 +65,7 @@ public abstract class Frame {
     public abstract boolean handle(IoArgs args) throws IOException;
 
     /**
-     *
+     * 获取下一帧
      */
     public abstract Frame nextFrame();
 

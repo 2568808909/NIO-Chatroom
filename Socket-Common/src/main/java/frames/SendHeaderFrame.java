@@ -45,7 +45,7 @@ public class SendHeaderFrame extends AbsSendPacketFrame{
     }
 
     @Override
-    public Frame nextFrame() {
+    public Frame buildNextFrame() {
         InputStream inputStream=packet.open();
         ReadableByteChannel channel= Channels.newChannel(inputStream);
         return new SendEntityFrame(getBodyIdentifier(),packet.length(),channel,packet);

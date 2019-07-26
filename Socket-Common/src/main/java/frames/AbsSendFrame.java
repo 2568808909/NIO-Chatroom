@@ -42,4 +42,8 @@ public abstract class AbsSendFrame extends Frame {
     }
 
     protected abstract int consumeBody(IoArgs args) throws IOException;
+
+    protected synchronized boolean isSending(){
+        return headerRemaining<Frame.FRAME_HEADER_LENGTH;
+    }
 }

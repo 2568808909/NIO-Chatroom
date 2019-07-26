@@ -22,7 +22,7 @@ public class IoArgs {
      * 读取数据
      */
     public int readForm(ReadableByteChannel channel) throws IOException {
-        startWriting();
+        //startWriting();
         int bytesProduced = 0;
         while (buffer.hasRemaining()) {
             int len = channel.read(buffer);
@@ -31,7 +31,7 @@ public class IoArgs {
             }
             bytesProduced += len;
         }
-        finishWriting();
+        //finishWriting();
         return bytesProduced;
     }
 
@@ -134,6 +134,12 @@ public class IoArgs {
         return size;
     }
 
+    public int fillEntity(int size) {
+        int fillSize=Math.min(size,buffer.remaining());
+        buffer.position(buffer.position()+fillSize);
+        return fillSize;
+    }
+
     public interface IoArgsEventProcessor {
         /**
          * 提供一份可消费的IoArgs
@@ -151,11 +157,11 @@ public class IoArgs {
         void onConsumeCompleted(IoArgs args);
     }
 
-    public void writeLength(int total) {
-        startWriting();
-        buffer.putInt(total);
-        finishWriting();
-    }
+//    public void writeLength(int total) {
+//        startWriting();
+//        buffer.putInt(total);
+//        finishWriting();
+//    }
 
     public int readLength() {
         return buffer.getInt();

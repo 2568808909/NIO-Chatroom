@@ -9,6 +9,9 @@ import core.SendPacket;
 
 public class SendEntityFrame extends AbsSendPacketFrame{
 
+    private long unConsumeEntityLength;
+    private ReadableByteChannel channel;
+
     public SendEntityFrame(short identifier,
                            long entityLength,
                            ReadableByteChannel channel,
@@ -18,17 +21,24 @@ public class SendEntityFrame extends AbsSendPacketFrame{
                 Frame.FLAG,
                 identifier,
                 packet);
-
+        this.channel=channel;
+        this.unConsumeEntityLength=entityLength-bodyRemaining;
     }
 
 
     @Override
     protected int consumeBody(IoArgs args) throws IOException {
-        return 0;
+        if(packet==null){
+            return args.fillEntity(bodyRemaining);
+        }
+        return args.readForm(channel);
     }
 
     @Override
-    public Frame nextFrame() {
-        return null;
+    public Frame buildNextFrame() {
+        if(unConsumeEntityLength==0){
+            return null;
+        }
+        return new SendEntityFrame(getBodyIdentifier(),unConsumeEntityLength,channel,packet);
     }
 }
