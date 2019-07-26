@@ -16,7 +16,7 @@ public class BytesReceivePacket extends AbsByteArrayReceivePacket<byte[]>{
     }
 
     @Override
-    protected byte type() {
+    public byte type() {
         return Packet.TYPE_MEMORY_BYTES;
     }
 }

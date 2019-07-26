@@ -5,7 +5,6 @@ import java.io.IOException;
 
 public abstract class Packet<Stream extends Closeable> implements Closeable {
     protected long length;
-
     private Stream stream;
 
     //byte 类型
@@ -34,7 +33,7 @@ public abstract class Packet<Stream extends Closeable> implements Closeable {
      * TYPE_STREAM_FILE=3 文件
      * TYPE_STREAM_DIRECT 长连接流
      */
-    protected abstract byte type();
+    public abstract byte type();
 
     public long length() {
         return length;

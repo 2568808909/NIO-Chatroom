@@ -18,7 +18,7 @@ public class StringReceivePacket extends AbsByteArrayReceivePacket<String>{
 	}
 
 	@Override
-	protected byte type() {
+	public byte type() {
 		return Packet.TYPE_MEMORY_STRING;
 	}
 

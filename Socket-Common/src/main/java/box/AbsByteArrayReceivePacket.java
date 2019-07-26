@@ -13,7 +13,7 @@ public abstract class AbsByteArrayReceivePacket<Entity> extends ReceivePacket<By
 
 
     @Override
-    protected byte type() {
+    public byte type() {
         return Packet.TYPE_MEMORY_BYTES;
     }
 

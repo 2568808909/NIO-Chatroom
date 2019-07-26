@@ -20,7 +20,7 @@ public class BytesSendPacket extends SendPacket<ByteArrayInputStream> {
     }
 
     @Override
-    protected byte type() {
+    public byte type() {
         return Packet.TYPE_MEMORY_BYTES;
     }
 }

@@ -7,6 +7,8 @@ import java.nio.channels.SocketChannel;
 
 import core.CloseUtils;
 import core.Connector;
+import core.Packet;
+import core.ReceivePacket;
 import foo.Foo;
 
 public class TCPClient extends Connector{
@@ -47,4 +49,13 @@ public class TCPClient extends Connector{
 		super.onChannelClose(socketChannel);
 		System.out.println("连接已关闭，无法读取数据");
 	}
+
+	@Override
+	protected void onReceivedNewPacket(ReceivePacket packet) {
+		super.onReceivedNewPacket(packet);
+		if(packet.type()== Packet.TYPE_MEMORY_STRING){
+			System.out.println(key.toString() + ":" + packet.getEntity());
+		}
+	}
+
 }

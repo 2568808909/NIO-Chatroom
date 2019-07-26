@@ -21,7 +21,7 @@ public class AsyncSendDispatcher implements SendDispatcher, IoArgs.IoArgsEventPr
 	private final AtomicBoolean isSending=new AtomicBoolean(false);
 	private IoArgs ioArgs=new IoArgs();
 	private SendPacket<?> packetTemp;
-	private ReadableByteChannel packetChannl;
+	private ReadableByteChannel packetChannel;
 	//由于IoArgs的容量仅为256，packet中的数据可能远远大于这个值，所以我们需要维护一个数据的中长度和已发送的数据数量(也就是一个数据的指针)
 	private long total;
 	private long position;
@@ -94,9 +94,9 @@ public class AsyncSendDispatcher implements SendDispatcher, IoArgs.IoArgsEventPr
 		if(packet==null){
 			return;
 		}else {
-			CloseUtils.close(packet, packetChannl);
+			CloseUtils.close(packet, packetChannel);
 			packetTemp = null;
-			packetChannl = null;
+			packetChannel = null;
 			position = 0;
 			total=0;
 		}
@@ -118,14 +118,14 @@ public class AsyncSendDispatcher implements SendDispatcher, IoArgs.IoArgsEventPr
 	@Override
 	public IoArgs provideIoArgs() {
 		IoArgs args=ioArgs;
-		if(packetChannl==null){
-			packetChannl= Channels.newChannel(packetTemp.open());
+		if(packetChannel==null){
+			packetChannel= Channels.newChannel(packetTemp.open());
 			args.setLimit(4);
 			args.writeLength((int)packetTemp.length());
 		}else{
 			args.setLimit((int)Math.min(args.capacity(),total-position));
 			try {
-				int count=args.readForm(packetChannl);
+				int count=args.readForm(packetChannel);
 				position+=count;
 			} catch (IOException e) {
 				e.printStackTrace();

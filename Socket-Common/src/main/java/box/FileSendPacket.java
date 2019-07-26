@@ -27,7 +27,7 @@ public class FileSendPacket extends SendPacket<FileInputStream> {
     }
 
     @Override
-    protected byte type() {
+    public byte type() {
         return Packet.TYPE_STREAM_FILE;
     }
 }

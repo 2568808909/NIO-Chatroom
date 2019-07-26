@@ -22,7 +22,7 @@ import impl.async.AsyncSendDispatcher;
  */
 public abstract class Connector implements Closeable, SocketChannelAdapater.OnChannelStatusChangedListener {
 
-    private UUID key = UUID.randomUUID();
+    protected UUID key = UUID.randomUUID();
     private SocketChannel channel;
     private Receiver receiver;
     private Sender sender;
@@ -46,7 +46,7 @@ public abstract class Connector implements Closeable, SocketChannelAdapater.OnCh
 
         @Override
         public void onReceivePacketCompleted(ReceivePacket packet) {
-            onReceiveNewPacket(packet);
+            onReceivedNewPacket(packet);
         }
 
         @Override
@@ -68,7 +68,7 @@ public abstract class Connector implements Closeable, SocketChannelAdapater.OnCh
 
     protected abstract File onCreateNewReceiveFile();
 
-    protected void onReceiveNewPacket(ReceivePacket packet) {
+    protected void onReceivedNewPacket(ReceivePacket packet) {
         System.out.println(key.toString() + ": receive New packet " + packet.type() + " " + packet.length());
     }
 
@@ -106,6 +106,10 @@ public abstract class Connector implements Closeable, SocketChannelAdapater.OnCh
     public void send(String msg) {
         SendPacket sendPacket = new StringSendPacket(msg);
         sendDispatcher.send(sendPacket);
+    }
+
+    public void send(SendPacket packet) {
+        sendDispatcher.send(packet);
     }
 
     @Override

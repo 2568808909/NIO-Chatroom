@@ -26,7 +26,7 @@ public class FileReceivePacket extends ReceivePacket<FileOutputStream, File> {
     }
 
     @Override
-    protected byte type() {
+    public byte type() {
         return Packet.TYPE_STREAM_FILE;
     }
 

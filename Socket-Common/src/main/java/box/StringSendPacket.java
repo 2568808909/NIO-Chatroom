@@ -14,7 +14,7 @@ public class StringSendPacket extends BytesSendPacket{
 
 
 	@Override
-	protected byte type() {
+	public byte type() {
 		return Packet.TYPE_MEMORY_STRING;
 	}
 }

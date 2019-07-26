@@ -39,4 +39,5 @@ public abstract class ReceivePacket<Stream extends OutputStream,Entity> extends 
         super.closeStream(stream);
         entity=buildEntity(stream);
     }
+
 }

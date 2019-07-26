@@ -182,10 +182,7 @@ public class IoSelectorProvider implements IoProvider{
 	 * 解除注册
 	 * @param channel
 	 * @param selector
-	 * @param registerOps
-	 * @param locker
 	 * @param map
-	 * @param runnable
 	 */
 	private static void unRegisterSelection(SocketChannel channel,
 			Selector selector,
