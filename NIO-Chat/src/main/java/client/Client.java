@@ -35,7 +35,7 @@ public class Client {
                     client.exit();
                 }
             }
-        }
+}
         IoContext.close();
     }
 
@@ -62,7 +62,6 @@ public class Client {
             }
             //发送字符串
             client.send(str);
-
         } while (true);
 
     }

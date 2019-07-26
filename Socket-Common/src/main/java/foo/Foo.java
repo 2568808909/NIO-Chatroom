@@ -12,14 +12,14 @@ public class Foo {
         String path=System.getProperty("user.dir")+(File.separator+CACHE_DIR+File.separator+dir);
         File file=new File(path);
         if(!file.exists()){
-            if(!file.mkdir()){
+            if(!file.mkdirs()){
                 throw new RuntimeException("fail to create file");
             }
         }
         return file;
     }
 
-    public static File createNewFile(File parent){
+    public static File createRandomTemp(File parent){
         String fileName= UUID.randomUUID().toString()+".tmp";
         File file=new File(parent,fileName);
         try {

@@ -41,7 +41,7 @@ public class TCPClient extends Connector{
 
 	@Override
 	protected File onCreateNewReceiveFile() {
-		return Foo.createNewFile(cachePath);
+		return Foo.createRandomTemp(cachePath);
 	}
 
 	@Override

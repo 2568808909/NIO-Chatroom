@@ -72,9 +72,6 @@ public abstract class Connector implements Closeable, SocketChannelAdapater.OnCh
         System.out.println(key.toString() + ": receive New packet " + packet.type() + " " + packet.length());
     }
 
-    protected void onReceiveNewMessage(String str) {
-        System.out.println(key.toString() + ":" + str);
-    }
 
     public void setup(SocketChannel socketChannel) throws IOException {
         this.channel = socketChannel;

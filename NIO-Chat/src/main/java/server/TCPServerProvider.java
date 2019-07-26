@@ -1,5 +1,6 @@
 package server;
 
+import java.io.File;
 import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.nio.channels.SelectionKey;
@@ -14,12 +15,14 @@ public class TCPServerProvider implements ClientHandlerCallBack{
 	
 	private static Provider PROVIDER=null;
 	private int port;
+	private File cachePath;
 	private List<ClientHandler> clientHandlers=new ArrayList<>();
 	private Selector selector;
 	private ServerSocketChannel server;
 	
-	public TCPServerProvider(int port) {
+	public TCPServerProvider(int port,File cachePath) {
 		this.port=port;
+		this.cachePath=cachePath;
 	}
 	
 	public void stop() {
@@ -83,7 +86,7 @@ public class TCPServerProvider implements ClientHandlerCallBack{
 							SocketChannel socketChannel=serverSocketChannel.accept();
 							System.out.println("accepted.");
 							try {
-								ClientHandler clientHandler=new ClientHandler(socketChannel,TCPServerProvider.this);
+								ClientHandler clientHandler=new ClientHandler(socketChannel,TCPServerProvider.this,cachePath);
 								clientHandlers.add(clientHandler);
 							}catch (Exception e) {
 								e.printStackTrace();
@@ -116,7 +119,7 @@ public class TCPServerProvider implements ClientHandlerCallBack{
 
 	public void boardcast(String str) {
 		for (ClientHandler clientHandler : clientHandlers) {
-			clientHandler.send(str);;
+			clientHandler.send(str);
 		}
 	}
 

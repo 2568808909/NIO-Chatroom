@@ -31,7 +31,7 @@ public class AsyncReceiveDispatcher implements ReceiveDispatcher, IoArgs.IoArgsE
     private void assemblePacket(IoArgs args) {
         if (packetTemp == null) {
             int length = args.readLength();
-            byte type=length>200? Packet.TYPE_STREAM_FILE:Packet.TYPE_MEMORY_BYTES;
+            byte type=length>200? Packet.TYPE_STREAM_FILE:Packet.TYPE_MEMORY_STRING;
             packetTemp = callback.onArrivedNewPacket(type,length);
             packetChannel = Channels.newChannel(packetTemp.open());
             total = length;
