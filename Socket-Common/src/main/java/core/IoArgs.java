@@ -128,7 +128,7 @@ public class IoArgs {
     /**
      * 获取数据到bytes中
      */
-    public int write(byte[] bytes, int offset) {
+    public int writeTo(byte[] bytes, int offset) {
         int size = Math.min(bytes.length - offset, buffer.remaining());
         buffer.get(bytes, offset, size);
         return size;

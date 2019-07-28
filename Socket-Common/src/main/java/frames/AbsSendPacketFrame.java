@@ -8,7 +8,7 @@ import core.SendPacket;
 
 public abstract class AbsSendPacketFrame extends AbsSendFrame{
 
-    protected SendPacket<?> packet;
+    protected volatile SendPacket<?> packet;
 
     public AbsSendPacketFrame(int length, byte type, byte flag, short identifier,SendPacket packet) {
         super(length, type, flag, identifier);
@@ -23,6 +23,8 @@ public abstract class AbsSendPacketFrame extends AbsSendFrame{
         packet=null;
         return !isSending;
     }
+
+    public synchronized SendPacket getSendPacket(){ return packet; }
 
     protected void fillDirtyDataOnAbort(){
         
